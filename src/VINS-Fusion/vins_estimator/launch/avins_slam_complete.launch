@@ -1,0 +1,57 @@
+<launch>
+    <!-- AVINS-SLAM 完整系统启动文件 -->
+    
+    <!-- 1. 启动相机 - 使用优化配置 -->
+    <include file="$(find vins)/launch/vins_camera_surfel.launch">
+        <arg name="emitter_enable" value="false"/>
+    </include>
+
+    <!-- 2. 启动时间戳同步节点 -->
+    <include file="$(find vins)/launch/vins_surfel_timestamp_sync.launch"/>
+
+    <!-- 3. 启动VINS估计器 -->
+    <node name="vins_node" pkg="vins" type="vins_node" output="screen">
+        <param name="config_file" type="string" value="$(find vins)/config/realsense_d435i_fix/realsense_stereo_imu_config.yaml" />
+        <!-- 使用时间戳同步后的话题 -->
+        <remap from="/camera/infra1/image_rect_raw" to="/camera/infra1/image_rect_raw_sync" />
+        <remap from="/camera/infra2/image_rect_raw" to="/camera/infra2/image_rect_raw_sync" />
+        <remap from="/camera/imu" to="/camera/imu_sync" />
+    </node>
+
+    <!-- 4. 启动回环检测 -->
+    <node name="loop_fusion" pkg="loop_fusion" type="loop_fusion_node" output="screen">
+        <param name="config_file" type="string" value="$(find vins)/config/realsense_d435i_fix/realsense_stereo_imu_config.yaml" />
+        <param name="image_topic" type="string" value="/camera/infra1/image_rect_raw_sync" />
+    </node>
+
+    <!-- 5. 启动DenseSurfelMapping -->
+    <node name="surfel_fusion" pkg="surfel_fusion" type="surfel_fusion" output="screen">
+        <!-- 相机参数 - 需要与VINS配置匹配 -->
+        <param name="cam_fx" value="387.229" />
+        <param name="cam_fy" value="387.229" />
+        <param name="cam_cx" value="320.0" />
+        <param name="cam_cy" value="240.0" />
+        <param name="cam_width" value="640" />
+        <param name="cam_height" value="480" />
+        
+        <!-- 融合参数 -->
+        <param name="fuse_far_distence" value="5.0" />
+        <param name="fuse_near_distence" value="0.2" />
+        <param name="drift_free_poses" value="15" />
+        
+        <!-- 使用时间戳同步后的话题 -->
+        <remap from="~image" to="/camera/infra1/image_rect_raw_sync" />
+        <remap from="~depth" to="/camera/aligned_depth_to_color/image_raw_sync" />
+        <remap from="~color" to="/camera/color/image_raw_sync" />
+        <remap from="~loop_path" to="/loop_fusion/pose_graph_path" />
+        <remap from="~extrinsic_pose" to="/vins_estimator/extrinsic" />
+        
+        <!-- 保存地图路径 -->
+        <param name="save_name" value="$(find surfel_fusion)/../../../output/surfel_map"/>
+    </node>
+
+    <!-- 6. 启动RViz可视化 -->
+    <node name="rviz" pkg="rviz" type="rviz" output="screen" 
+          args="-d $(find vins)/launch/vins_rviz_config.rviz" />
+
+</launch>

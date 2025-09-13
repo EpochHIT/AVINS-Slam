@@ -1,0 +1,48 @@
+<launch>
+    <!-- 启动 RealSense 相机 - 同时提供IR图像(for VINS)和RGB+深度图像(for DenseSurfelMapping) -->
+    <!-- <include file="$(find vins)/launch/rs_camera_vins_with_rgbd.launch"/>
+     -->
+    <!-- IMU重时间戳节点 - 用于相机和IMU时钟不同步的情况-->
+    <!-- <include file="$(find vins)/launch/imu_retimestamp.launch">
+        <arg name="in" value="/camera/imu"/>
+        <arg name="out" value="/camera/imu"/>
+    </include>  -->
+
+    <node pkg="surfel_fusion" type="surfel_fusion" name="surfel_fusion" clear_params="true" output="screen">
+
+        <!-- camera parameter -->
+        <param name="cam_width"  value="640" />
+        <param name="cam_height" value="480" />
+
+        <!--input grey_image info-->
+        <param name="cam_fx" value="611.603515625" />
+        <param name="cam_fy" value="611.7554321289062" />
+        <param name="cam_cx" value="317.1910400390625" />
+        <param name="cam_cy" value="242.47885131835938" />
+
+        <!-- fusion parameter, all in meter -->
+        <param name="fuse_far_distence"  value="3.0" />
+        <param name="fuse_near_distence" value="0.1" />
+
+        <!-- for deform the map -->
+        <param name="drift_free_poses" value="300" />
+
+    <!-- 消息同步容差（秒），用于匹配图像/深度与位姿，默认10ms -->
+    <param name="msg_tolerance" value="0.01" />
+
+        <!-- 使用时间戳同步后的话题 -->
+        <remap from="~image" to="/camera/infra1/image_rect_raw" />
+        <remap from="~depth" to="/camera/depth/image_rect_raw" />
+        <!-- <remap from="~depth" to="/camera/aligned_depth_to_color/image_raw" /> -->
+        <remap from="~color" to="/camera/color/image_raw" />
+        <remap from="~loop_path" to="/loop_fusion/pose_graph_path" />
+        <remap from="~extrinsic_pose" to="/vins_estimator/extrinsic" />
+        <param name="save_name" value="$(find surfel_fusion)/../../../output_map"/>
+
+    </node>
+
+    <!-- Launch RViz with configuration -->
+    <!-- <node name="rviz" pkg="rviz" type="rviz" output="screen" 
+          args="-d $(find surfel_fusion)/launch/surfel.rviz" /> -->
+
+</launch>

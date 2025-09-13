@@ -1,0 +1,94 @@
+<launch>
+  <!-- 专为VINS + DenseSurfelMapping优化的相机配置 -->
+  <arg name="serial_no"           default=""/>
+  <arg name="usb_port_id"         default=""/>
+  <arg name="device_type"         default=""/>
+  <arg name="json_file_path"      default=""/>
+  <arg name="camera"              default="camera"/>
+  <arg name="tf_prefix"           default="$(arg camera)"/>
+  <arg name="external_manager"    default="false"/>
+  <arg name="manager"             default="realsense2_camera_manager"/>
+
+  <!-- 红外图像配置 - 为VINS优化 -->
+  <arg name="infra_width"         default="640"/>
+  <arg name="infra_height"        default="480"/>
+  <arg name="infra_fps"           default="15"/>  <!-- 降低帧率节省带宽 -->
+  <arg name="enable_infra"        default="true"/>
+  <arg name="enable_infra1"       default="true"/>
+  <arg name="enable_infra2"       default="true"/>
+
+  <!-- RGB配置 - 为DenseSurfelMapping优化 -->
+  <arg name="color_width"         default="640"/>
+  <arg name="color_height"        default="480"/>
+  <arg name="color_fps"           default="15"/>  <!-- 降低帧率节省带宽 -->
+  <arg name="enable_color"        default="true"/>
+
+  <!-- 深度配置 - 为DenseSurfelMapping优化 -->
+  <arg name="depth_width"         default="640"/>
+  <arg name="depth_height"        default="480"/>
+  <arg name="depth_fps"           default="15"/>  <!-- 降低帧率节省带宽 -->
+  <arg name="enable_depth"        default="true"/>
+  <arg name="align_depth"         default="true"/>  <!-- 对齐到彩色图像 -->
+
+  <!-- IMU配置 -->
+  <arg name="enable_gyro"         default="true"/>
+  <arg name="enable_accel"        default="true"/>
+  <arg name="gyro_fps"            default="200"/>
+  <arg name="accel_fps"           default="250"/>
+  <arg name="unite_imu_method"    default="linear_interpolation"/>
+  <arg name="enable_sync"         default="true"/>
+
+  <arg name="publish_tf"          default="true"/>
+  <arg name="tf_publish_rate"     default="0"/>
+
+  <!-- 禁用激光发射器以减少功耗和热量 -->
+  <arg name="emitter_enable"      default="false"/>
+
+  <!-- 激光发射器参数配置 -->
+  <rosparam>
+    /camera/stereo_module/emitter_enabled: 0
+  </rosparam>
+  <rosparam if="$(arg emitter_enable)">
+    /camera/stereo_module/emitter_enabled: 1
+  </rosparam>
+
+  <group ns="$(arg camera)">
+    <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
+      <arg name="tf_prefix"                value="$(arg tf_prefix)"/>
+      <arg name="external_manager"         value="$(arg external_manager)"/>
+      <arg name="manager"                  value="$(arg manager)"/>
+      <arg name="serial_no"                value="$(arg serial_no)"/>
+      <arg name="usb_port_id"              value="$(arg usb_port_id)"/>
+      <arg name="device_type"              value="$(arg device_type)"/>
+      <arg name="json_file_path"           value="$(arg json_file_path)"/>
+
+      <arg name="infra_width"              value="$(arg infra_width)"/>
+      <arg name="infra_height"             value="$(arg infra_height)"/>
+      <arg name="infra_fps"                value="$(arg infra_fps)"/>
+      <arg name="enable_infra"             value="$(arg enable_infra)"/>
+      <arg name="enable_infra1"            value="$(arg enable_infra1)"/>
+      <arg name="enable_infra2"            value="$(arg enable_infra2)"/>
+
+      <arg name="color_width"              value="$(arg color_width)"/>
+      <arg name="color_height"             value="$(arg color_height)"/>
+      <arg name="color_fps"                value="$(arg color_fps)"/>
+      <arg name="enable_color"             value="$(arg enable_color)"/>
+
+      <arg name="depth_width"              value="$(arg depth_width)"/>
+      <arg name="depth_height"             value="$(arg depth_height)"/>
+      <arg name="depth_fps"                value="$(arg depth_fps)"/>
+      <arg name="enable_depth"             value="$(arg enable_depth)"/>
+      <arg name="align_depth"              value="$(arg align_depth)"/>
+
+      <arg name="enable_gyro"              value="$(arg enable_gyro)"/>
+      <arg name="enable_accel"             value="$(arg enable_accel)"/>
+      <arg name="gyro_fps"                 value="$(arg gyro_fps)"/>
+      <arg name="accel_fps"                value="$(arg accel_fps)"/>
+      <arg name="unite_imu_method"         value="$(arg unite_imu_method)"/>
+      <arg name="enable_sync"              value="$(arg enable_sync)"/>
+
+      <arg name="publish_tf"               value="$(arg publish_tf)"/>
+      <arg name="tf_publish_rate"          value="$(arg tf_publish_rate)"/>
+    </include>
+  </group>
+</launch>
