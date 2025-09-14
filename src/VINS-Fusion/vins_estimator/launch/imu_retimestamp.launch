@@ -1,9 +1,0 @@
-<launch>
-  <arg name="in"  default="/camera/imu"/>
-  <arg name="out" default="/camera/imu_sync"/>
-
-  <node pkg="vins" type="imu_retimestamp_node" name="imu_retimestamp" output="screen">
-    <param name="in"  value="$(arg in)"/>
-    <param name="out" value="$(arg out)"/>
-  </node>
-</launch>

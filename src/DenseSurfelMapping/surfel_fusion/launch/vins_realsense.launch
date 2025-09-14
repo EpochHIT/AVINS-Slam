@@ -8,6 +8,21 @@
         <arg name="out" value="/camera/imu"/>
     </include>  -->
 
+    <!-- 在主机侧将深度注册到彩色相机平面，避免在相机端开启 align_depth 影响IR输出 -->
+    <group ns="/camera">
+        <!-- 生成 /camera/color/image_rect_color 供对齐使用（若驱动已发布可省略） -->
+        <node pkg="image_proc" type="image_proc" name="color_image_proc" ns="color" output="screen"/>
+
+    <!-- 软件对齐（nodelet 方式）：输入 /camera/depth/image_rect_raw + /camera/color/image_rect_color，输出 /camera/depth_registered/image_rect -->
+    <node pkg="nodelet" type="nodelet" name="register_depth_to_color" args="standalone depth_image_proc/register" output="screen">
+            <remap from="depth/image_rect"      to="/camera/depth/image_rect_raw"/>
+            <remap from="depth/camera_info"     to="/camera/depth/camera_info"/>
+            <remap from="rgb/image_rect_color"  to="/camera/color/image_rect_color"/>
+            <remap from="rgb/camera_info"       to="/camera/color/camera_info"/>
+            <remap from="registered/image_rect" to="/camera/depth_registered/image_rect"/>
+    </node>
+    </group>
+
     <node pkg="surfel_fusion" type="surfel_fusion" name="surfel_fusion" clear_params="true" output="screen">
 
         <!-- camera parameter -->
@@ -28,16 +43,20 @@
         <param name="drift_free_poses" value="300" />
 
     <!-- 消息同步容差（秒），用于匹配图像/深度与位姿，默认10ms -->
-    <param name="msg_tolerance" value="0.01" />
-
+    <param name="msg_sync_tolerance" value="0.01" />
+    <!-- 如需使用“彩色图 + 主机侧对齐深度”，请改为以下 remap（并将上面的 cam_* 设置为彩色相机内参）： -->
+    
+        <remap from="~image" to="/camera/color/image_rect_color" />
+        <remap from="~depth" to="/camera/depth_registered/image_rect" />
         <!-- 使用时间戳同步后的话题 -->
-        <remap from="~image" to="/camera/infra1/image_rect_raw" />
-        <remap from="~depth" to="/camera/depth/image_rect_raw" />
+        <!-- <remap from="~image" to="/camera/infra1/image_rect_raw" /> -->
+        <!-- <remap from="~depth" to="/camera/depth/image_rect_raw" /> -->
         <!-- <remap from="~depth" to="/camera/aligned_depth_to_color/image_raw" /> -->
         <remap from="~color" to="/camera/color/image_raw" />
         <remap from="~loop_path" to="/loop_fusion/pose_graph_path" />
         <remap from="~extrinsic_pose" to="/vins_estimator/extrinsic" />
         <param name="save_name" value="$(find surfel_fusion)/../../../output_map"/>
+
 
     </node>
 
